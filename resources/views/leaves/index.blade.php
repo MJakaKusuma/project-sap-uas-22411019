@@ -45,20 +45,20 @@
     </thead>
     <tbody>
     @foreach ($leaves as $leave)
-      <tr>
+    <tr>
       @if(auth()->user()->role !== 'employee')
       <td>{{ $leave->user->name }}</td>
       <td>{{ $leave->user->email }}</td>
-      @endif
+    @endif
       <td>{{ $leave->start_date }}</td>
       <td>{{ $leave->end_date }}</td>
       <td>{{ $leave->reason }}</td>
       <td>
       <span class="badge 
       @if($leave->status == 'approved') bg-success 
-      @elseif($leave->status == 'rejected') bg-danger 
-      @else bg-warning text-dark @endif">
-        {{ ucfirst($leave->status) }}
+    @elseif($leave->status == 'rejected') bg-danger 
+    @else bg-warning text-dark @endif">
+      {{ ucfirst($leave->status) }}
       </span>
       </td>
       @if(in_array(auth()->user()->role, ['admin', 'manager']))
@@ -74,12 +74,14 @@
       @method('PUT')
       <button type="submit" class="btn btn-sm btn-danger">Tolak</button>
       </form>
-      @else
-      <small class="text-muted">-</small>
-      @endif
+    @else
+      <button class="btn btn-sm btn-secondary" disabled>
+      <i class="mdi mdi-check-circle-outline"></i> Sudah Disetujui/Ditolak
+      </button>
+    @endif
       </td>
-      @endif
-      </tr>
+    @endif
+    </tr>
     @endforeach
     </tbody>
   </x-table>

@@ -16,7 +16,7 @@ class User extends Authenticatable
         'password',
         'role',
         'company_id',
-        'division_id',
+        'division_detail_id',
         'phone',
         'address',
     ];
@@ -30,10 +30,11 @@ class User extends Authenticatable
     }
 
     // Relasi ke divisi
-    public function division()
+    public function divisionDetail()
     {
-        return $this->belongsTo(Division::class);
+        return $this->belongsTo(DivisionDetail::class);
     }
+
 
     // Contoh relasi ke gaji atau cuti jika ada
     public function salaries()
@@ -49,6 +50,10 @@ class User extends Authenticatable
     public function attendances()
     {
         return $this->hasMany(Attendance::class);
+    }
+    public function division()
+    {
+        return $this->divisionDetail?->division;
     }
 
 }

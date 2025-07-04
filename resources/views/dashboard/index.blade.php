@@ -39,7 +39,12 @@
     </div>
     </div>
   @elseif(auth()->user()->role === 'admin')
-    {{-- Konten Dashboard Admin --}}
+    @php
+    $pieLabels = [];
+    foreach ($leaveStatusLabels as $index => $label) {
+    $pieLabels[] = $label . ' (' . ($leaveStatusCounts[$index] ?? 0) . ')';
+    }
+    @endphp
     <div class="page-header">
     <h3 class="page-title">
     <span class="page-title-icon bg-gradient-primary text-white me-2">
@@ -47,7 +52,93 @@
     </span> Dashboard Admin
     </h3>
     </div>
-    {{-- Konten admin lainnya --}}
+
+    {{-- 🔹 Statistik Singkat --}}
+    <div class="row">
+    @php
+    $summaryCards = [
+    ['title' => 'Karyawan Aktif', 'count' => $employeesCount, 'icon' => 'mdi-account-multiple', 'color' => 'info'],
+    ['title' => 'Cuti Diproses', 'count' => $leavePendingCount, 'icon' => 'mdi-calendar-remove', 'color' => 'danger'],
+    ['title' => 'Slip Gaji Bulan Ini', 'count' => $salaryThisMonth, 'icon' => 'mdi-credit-card-outline', 'color' => 'success'],
+    ];
+    @endphp
+    @foreach($summaryCards as $card)
+    <div class="col-md-4 grid-margin stretch-card">
+    <div class="card bg-gradient-{{ $card['color'] }} text-white shadow-sm">
+      <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center">
+      <h4 class="mb-2">{{ $card['title'] }}</h4>
+      <i class="mdi {{ $card['icon'] }} mdi-24px"></i>
+      </div>
+      <h2 class="font-weight-bold">{{ $card['count'] }}</h2>
+      <p class="mb-0 small">Terdaftar di perusahaan Anda</p>
+      </div>
+    </div>
+    </div>
+    @endforeach
+    </div>
+
+    {{-- 🔹 Grafik --}}
+    <div class="row mt-4">
+    <div class="col-md-6 grid-margin stretch-card">
+    <div class="card shadow-sm">
+      <div class="card-body">
+      <h5 class="card-title mb-3">Distribusi Karyawan per Divisi</h5>
+      <canvas id="employeeDivisionChart" height="180"></canvas>
+      </div>
+    </div>
+    </div>
+    <div class="col-md-6 grid-margin stretch-card">
+    <div class="card shadow-sm">
+      <div class="card-body">
+      <h5 class="card-title mb-3">Status Pengajuan Cuti</h5>
+      <canvas id="leaveStatusChart" height="180"></canvas>
+      </div>
+    </div>
+    </div>
+    </div>
+
+    <div class="row mt-3">
+    <div class="col-md-12 grid-margin stretch-card">
+    <div class="card shadow-sm">
+      <div class="card-body">
+      <h5 class="card-title mb-3">Slip Gaji Bulanan</h5>
+      <canvas id="salaryTrendChart" height="180"></canvas>
+      </div>
+    </div>
+    </div>
+    </div>
+
+    {{-- 🔹 Tabel Ringkas --}}
+    <div class="row mt-4">
+    @php
+    $tables = [
+    ['title' => 'Pengajuan Cuti Terakhir', 'data' => $recentLeaves, 'slot' => fn($item) => $item->user->name . ' <span class="badge bg-primary">' . ucfirst($item->status) . '</span>'],
+    ['title' => 'Karyawan Terbaru', 'data' => $recentEmployees, 'slot' => fn($item) => $item->name],
+    ['title' => 'Slip Gaji Terakhir', 'data' => $recentSalaries, 'slot' => fn($item) => $item->user->name . ' - Rp ' . number_format($item->amount, 0, ',', '.')],
+    ];
+    @endphp
+
+    @foreach($tables as $tbl)
+    <div class="col-md-4 grid-margin stretch-card">
+    <div class="card shadow-sm">
+      <div class="card-body">
+      <h6 class="card-title mb-3">{{ $tbl['title'] }}</h6>
+      <ul class="list-group list-group-flush">
+      @forelse($tbl['data'] as $item)
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+      {!! $tbl['slot']($item) !!}
+      </li>
+      @empty
+      <li class="list-group-item text-muted">Tidak ada data.</li>
+      @endforelse
+      </ul>
+      </div>
+    </div>
+    </div>
+    @endforeach
+    </div>
+
 
   @elseif(auth()->user()->role === 'employee')
     {{-- Konten Dashboard Karyawan --}}
@@ -105,6 +196,17 @@
     </div>
     </div>
     </div>
+    @php
+    $today = \Carbon\Carbon::today()->toDateString();
+    $user = auth()->user();
+
+    // Ambil status kehadiran hari ini (jika ada)
+    $todayAttendance = $user->attendances()->where('date', $today)->first();
+    $status = $todayAttendance->status ?? null;
+    @endphp
+
+
+
 
     {{-- Chart --}}
     <div class="row">
@@ -129,6 +231,104 @@
 @endsection
 
 @section('scripts')
+  @if (auth()->user()->role === 'admin')
+    {{-- Include Chart.js & ChartDataLabels --}}
+    <script src="{{ asset('js/chart.js') }}"></script>
+    <script
+    src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
+    <script>
+    // === Karyawan per Divisi (Bar) ===
+    new Chart(document.getElementById('employeeDivisionChart'), {
+    type: 'bar',
+    data: {
+      labels: @json($divisionLabels),
+      datasets: [{
+      label: 'Jumlah Karyawan',
+      data: @json($divisionCounts),
+      backgroundColor: 'rgba(54, 162, 235, 0.7)'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+      legend: { display: false }
+      },
+      scales: {
+      y: {
+      beginAtZero: true,
+      ticks: {
+      precision: 0 // Angka bulat
+      }
+      }
+      }
+    }
+    });
+
+    // === Status Pengajuan Cuti (Pie) ===
+    new Chart(document.getElementById('leaveStatusChart'), {
+    type: 'pie',
+    data: {
+      labels: @json($pieLabels),
+      datasets: [{
+      data: @json($leaveStatusCounts),
+      backgroundColor: [
+      'rgba(244, 67, 54, 0.7)',
+      // disetujui
+      'rgba(76, 175, 80, 0.7)',
+      'rgba(255, 193, 7, 0.7)',   // diproses
+      // ditolak
+      ]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+      legend: {
+      position: 'bottom',
+      labels: {
+      font: {
+        size: 14
+      }
+      }
+      }
+      }
+    }
+    });
+    // === Slip Gaji Bulanan (Line) ===
+    new Chart(document.getElementById('salaryTrendChart'), {
+    type: 'line',
+    data: {
+      labels: @json($salaryLabels),
+      datasets: [{
+      label: 'Slip Gaji Diterbitkan',
+      data: @json($salaryCounts),
+      fill: true,
+      backgroundColor: 'rgba(153, 102, 255, 0.3)',
+      borderColor: 'rgba(153, 102, 255, 1)',
+      tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+      legend: { display: false }
+      },
+      scales: {
+      y: {
+      beginAtZero: true,
+      ticks: {
+      precision: 0 // Bilangan bulat
+      }
+      }
+      }
+    }
+    });
+    </script>
+  @endif
+
+
+
   @if(auth()->user()->role === 'employee')
     <script src="{{ asset('js/chart.js') }}"></script>
     <script>
@@ -202,14 +402,14 @@
     new Chart(attendanceCtx.getContext('2d'), {
       type: 'pie',
       data: {
-      labels: @json($attendanceLabels),
+      labels: @json($attendanceLabels), // ['Hadir', 'Izin', 'Sakit', 'Cuti']
       datasets: [{
-      data: @json($attendanceCounts),
+      data: @json($attendanceCounts), // [jumlah_hadir, jumlah_izin, dst...]
       backgroundColor: [
-      'rgba(75, 192, 192, 0.6)', // Hadir
-      'rgba(255, 206, 86, 0.6)', // Izin
-      'rgba(255, 99, 132, 0.6)', // Sakit
-      'rgba(201, 203, 207, 0.6)' // Lainnya
+      'rgba(75, 192, 192, 0.6)',   // Hadir
+      'rgba(255, 206, 86, 0.6)',   // Izin
+      'rgba(255, 99, 132, 0.6)',   // Sakit
+      'rgba(201, 203, 207, 0.6)'   // Cuti
       ],
       borderColor: '#fff',
       borderWidth: 2
@@ -223,7 +423,7 @@
       },
       title: {
       display: true,
-      text: 'Statistik Kehadiran'
+      text: 'Statistik Kehadiran Bulan Ini'
       },
       tooltip: {
       callbacks: {

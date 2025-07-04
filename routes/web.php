@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\DivisionDetailController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
@@ -40,7 +42,8 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
-    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
 
     // Superadmin
     Route::prefix('superadmin')->middleware(['role:superadmin', 'role_prefix_check'])->name('superadmin.')->group(function () {
@@ -55,8 +58,12 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::resource('users', UserController::class);
         Route::resource('leaves', LeaveController::class)->only(['index', 'show', 'update']);
         Route::resource('salaries', SalaryController::class)->only(['index', 'create', 'store']);
+        Route::resource('attendances', AttendanceController::class)->only(['index', 'create', 'store']);
         Route::put('leaves/{leave}/approve', [LeaveController::class, 'approve'])->name('leaves.approve');
         Route::put('leaves/{leave}/reject', [LeaveController::class, 'reject'])->name('leaves.reject');
+        Route::resource('division-details', DivisionDetailController::class);
+        Route::put('/admin/division-details/{id}', [DivisionDetailController::class, 'update'])->name('admin.division-details.update');
+        Route::get('/admin/attendances', [AttendanceController::class, 'index'])->name('attendances.index');
     });
 
 
@@ -74,6 +81,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
         Route::resource('leaves', LeaveController::class)->only(['create', 'store', 'index', 'show']);
         Route::resource('salaries', SalaryController::class)->only(['index', 'show']);
         Route::get('salary', [SalaryController::class, 'showByUser'])->name('salaries.byUser');
+        Route::post('/attendances/hadir', [AttendanceController::class, 'markHadir'])->name('attendances.hadir');
     });
 
     // Akses detail user (role: admin/manager/employee + perusahaan sama)

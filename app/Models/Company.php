@@ -17,6 +17,10 @@ class Company extends Model
     {
         return $this->hasMany(User::class);
     }
+    public function divisionDetails()
+    {
+        return $this->hasMany(DivisionDetail::class);
+    }
 
     // Hapus karena employee sudah gabung ke user
     // public function employees()

@@ -13,10 +13,10 @@
 
   @section('content')
     @if(auth()->user()->role === 'admin')
-    <div class="page-header">
-    <h3 class="page-title">
+    <div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <h3 class="page-title d-flex align-items-center">
       <span class="page-title-icon bg-gradient-primary text-white me-2">
-      <i class="mdi mdi-cash-multiple"></i>
+      <i class="mdi mdi-account-multiple"></i>
       </span> Data Gaji Karyawan
     </h3>
 
@@ -44,7 +44,7 @@
       @foreach($salaries as $salary)
       <tr>
       <td>{{ $salary->user->name }}</td>
-      <td>{{ $salary->user->division->name ?? '-' }}</td>
+      <td>{{ $salary->user->division()?->name ?? '-' }}</td>
       <td>Rp {{ number_format($salary->basic_salary, 0, ',', '.') }}</td>
       <td>Rp {{ number_format($salary->allowance, 0, ',', '.') }}</td>
       <td>Rp {{ number_format($salary->bonus, 0, ',', '.') }}</td>
@@ -68,7 +68,9 @@
       <i class="mdi mdi-check"></i> Tandai Dibayar
       </button>
       @else
-      <small class="text-muted">-</small>
+      <button class="btn btn-sm btn-secondary" disabled>
+      <i class="mdi mdi-check-circle-outline"></i> Sudah Dibayar
+      </button>
       @endif
       </form>
       </td>

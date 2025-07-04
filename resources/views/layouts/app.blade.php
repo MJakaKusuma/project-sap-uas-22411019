@@ -70,7 +70,16 @@
             <a class="nav-link dropdown-toggle" id="profileDropdown" href="#" data-bs-toggle="dropdown"
               aria-expanded="false">
               <div class="nav-profile-img">
-                <img src="{{url('images/faces/face1.jpg')}}" alt="image">
+                <div style="width: 32px; height: 32px;"
+                  class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center bg-light">
+                  @if(auth()->user()->avatar)
+            <img src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="avatar"
+            style="width: 100%; height: 100%; object-fit: cover;">
+          @else
+            <i class="mdi mdi-account-circle text-muted" style="font-size: 28px;"></i>
+          @endif
+                </div>
+
                 <span class="availability-status online"></span>
               </div>
               <div class="nav-profile-text">
@@ -210,11 +219,16 @@
       <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <ul class="nav">
           <li class="nav-item nav-profile">
-            <a href="#" class="nav-link">
+            <a href="{{ route('profile.show') }}" class="nav-link">
               <div class="nav-profile-image">
-                <img src="{{ url('images/faces/face1.jpg') }}" alt="profile" />
+                @if(auth()->user()->avatar)
+          <img src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="avatar" />
+        @else
+          <i class="mdi mdi-account-circle text-muted" style="font-size: 36px;"></i>
+        @endif
                 <span class="login-status online"></span>
               </div>
+
               <div class="nav-profile-text d-flex flex-column">
                 <span class="font-weight-bold mb-2">{{ auth()->user()->name }}</span>
                 <span class="text-secondary text-small">{{ ucfirst(auth()->user()->role) }}</span>
@@ -243,12 +257,24 @@
           <i class="mdi mdi-account-multiple menu-icon"></i>
         </a>
         </li>
+        <li class="nav-item">
+        <a class="nav-link" href="{{ route('superadmin.divisions.index') }}">
+          <span class="menu-title">Divisi</span>
+          <i class="mdi mdi-view-list menu-icon"></i>
+        </a>
+        </li>
       @endif
 
           @if(auth()->user()->role === 'admin')
         <li class="nav-item">
         <a class="nav-link" href="{{ route('admin.users.index') }}">
           <span class="menu-title">Karyawan</span>
+          <i class="mdi mdi-account-group menu-icon"></i>
+        </a>
+        </li>
+        <li class="nav-item">
+        <a class="nav-link" href="{{ route('admin.attendances.index') }}">
+          <span class="menu-title">Rekap Kehadiran</span>
           <i class="mdi mdi-account-group menu-icon"></i>
         </a>
         </li>
@@ -264,6 +290,12 @@
           <i class="mdi mdi-cash-multiple menu-icon"></i>
         </a>
         </li>
+        <li class="nav-item">
+        <a class="nav-link" href="{{ route('admin.division-details.index') }}">
+          <span class="menu-title">Divisi Perusahaan</span>
+          <i class="mdi mdi-format-list-bulleted menu-icon"></i>
+        </a>
+        </li>
       @endif
 
           @if(auth()->user()->role === 'manager')
@@ -277,6 +309,12 @@
         <a class="nav-link" href="{{ route('salaries.index') }}">
           <span class="menu-title">Gaji</span>
           <i class="mdi mdi-cash-multiple menu-icon"></i>
+        </a>
+        </li>
+        <li class="nav-item">
+        <a class="nav-link" href="{{ route('admin.division-details.index') }}">
+          <span class="menu-title">Divisi Perusahaan</span>
+          <i class="mdi mdi-format-list-bulleted menu-icon"></i>
         </a>
         </li>
       @endif

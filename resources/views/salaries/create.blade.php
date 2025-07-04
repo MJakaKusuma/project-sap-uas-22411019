@@ -8,6 +8,16 @@
 
   <div class="card">
     <div class="card-body">
+    @if($errors->any())
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+      @foreach($errors->all() as $error)
+      <li>{{ $error }}</li>
+    @endforeach
+      </ul>
+    </div>
+    @endif
+
     <form action="{{ route('admin.salaries.store') }}" method="POST">
       @csrf
 
@@ -17,15 +27,10 @@
         <option value="">Pilih Karyawan</option>
         @foreach($users as $user)
       <option value="{{ $user->id }}">
-      {{ $user->name }} - {{ $user->division->name ?? '-' }}
+      {{ $user->name }} - {{ $user->division()?->name ?? '-' }}
       </option>
       @endforeach
       </select>
-      </div>
-
-      <div class="form-group">
-      <label>Gaji Pokok</label>
-      <input type="number" name="basic_salary" class="form-control" required>
       </div>
 
       <div class="form-group">
@@ -46,14 +51,6 @@
       <div class="form-group">
       <label>Tanggal Pembayaran</label>
       <input type="date" name="payment_date" class="form-control" required>
-      </div>
-
-      <div class="form-group">
-      <label>Status Pembayaran</label>
-      <select name="payment_status" class="form-control" required>
-        <option value="pending">Pending</option>
-        <option value="paid">Paid</option>
-      </select>
       </div>
 
       <button type="submit" class="btn btn-primary">Simpan Gaji</button>
